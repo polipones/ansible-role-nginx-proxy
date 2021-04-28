@@ -26,7 +26,7 @@ server {
 
     error_log /var/log/nginx/{{ item.name }}.log;
 
-    {% if nginx_use_htpasswd is defined and nginx_use_htpasswd item.auth is defined and item.auth %}
+    {% if nginx_use_htpasswd is defined and nginx_use_htpasswd and item.auth is defined and item.auth %}
       satisfy    any;
       {% if item.allowed_domains is defined %}
         {% for domain in item.allowed_domains %}
