@@ -1,0 +1,76 @@
+- name: Check for required variables
+  fail: 
+    msg: "{{ item }} is required"
+  when: item is not defined or item | length == 0
+  loop:
+    - "{{ nginx_hosts }}"
+    - "{{ nginx_letsencrypt_email }}"
+
+- name: Check .htpasswd credential variables
+  fail:
+    msg: "{{ item }} is required when .htpasswd support is enabled"
+  when: nginx_use_htpasswd and (item is not defined or item | length == 0)
+  loop:
+    - "{{ nginx_htpasswd_username }}"
+    - "{{ nginx_htpasswd_hashed_password }}"
+
+- name: Installing nginx and certbot
+  apt:
+    pkg:
+      - nginx
+      - certbot
+
+- name: Enabling nginx service
+  service:
+    state: started
+    enabled: yes
+    name: nginx
+
+- name: Copying nginx configuration
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+  notify: restart_nginx
+
+- name: Copy nginx password
+  template:
+    src: .htpasswd.j2
+    dest: /etc/nginx/.htpasswd
+  notify: restart_nginx
+  when: nginx_use_htpasswd | bool
+
+- name: Creating srv directories
+  file:
+    state: directory
+    path: /srv/http/{{ item.name }}
+  with_items: "{{ nginx_hosts }}"
+  when: nginx_hosts is defined
+
+- name: Creating challenge directory
+  file:
+    state: directory
+    path: /var/lib/letsencrypt/.well-known/acme-challenge
+  notify: restart_nginx
+
+- name: Using Certbot to get certificates
+  command: "certbot certonly --quiet --agree-tos --email {{ nginx_letsencrypt_email }} --webroot -w /var/lib/letsencrypt/ -d {{ item.name }}"
+  with_items: "{{ nginx_hosts }}"
+  when: nginx_hosts is defined
+
+- name: Delete all hosts configuration
+  shell: rm -rf /etc/nginx/hosts/*
+  args:
+    warn: no
+
+- name: Ensure hosts directory exists
+  file:
+    state: directory
+    path: /etc/nginx/hosts
+
+- name: Deploy nginx configurations
+  template:
+    src: host.conf.j2
+    dest: /etc/nginx/hosts/{{ item.name }}.conf
+  with_items: "{{ nginx_hosts }}"
+  when: nginx_hosts is defined
+  notify: restart_nginx
