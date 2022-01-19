@@ -12,7 +12,7 @@ server {
     {% endif %}
     server_name  {{ item.name }};
 
-    ssl_certificate      /etc/letsencrypt/live/{{ item.name }}/cert.pem;
+    ssl_certificate      /etc/letsencrypt/live/{{ item.name }}/fullchain.pem;
     ssl_certificate_key  /etc/letsencrypt/live/{{ item.name }}/privkey.pem;
 
     ssl_protocols TLSv1.3 TLSv1.2;
