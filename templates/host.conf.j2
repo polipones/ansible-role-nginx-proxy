@@ -24,7 +24,7 @@ server {
 
     error_log /var/log/nginx/{{ item.name }}.log;
 
-    {% if nginx_use_htpasswd is defined and nginx_use_htpasswd and item.auth is defined and item.auth %}
+    {% if (nginx_use_htpasswd is defined and nginx_use_htpasswd and item.auth is defined and item.auth) or item.allowed_domains is defined %}
       satisfy    any;
       {% if item.allowed_domains is defined %}
         {% for domain in item.allowed_domains %}
@@ -32,8 +32,10 @@ server {
         {% endfor %}
       {% endif %}
       deny       all;
-      auth_basic "Private page";
-      auth_basic_user_file /etc/nginx/.htpasswd;
+      {% if nginx_use_htpasswd is defined and nginx_use_htpasswd and item.auth is defined and item.auth %}
+        auth_basic "Private page";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+      {% endif %}
     {% endif %}
 
     {% if item.pass is defined %}
