@@ -38,7 +38,7 @@ server {
       {% endif %}
     {% endif %}
 
-    {% if item.pass is defined %}
+    {% if item.pass is defined or item.load_balance is defined %}
       {% if item.location is defined %}
         location {{ item.location }} {
       {% else %}
@@ -54,7 +54,7 @@ server {
             '{{ attr.name }}' '{{ attr.value }}';
           {% endfor %}
         {% endif %}
-        proxy_pass {{ item.pass }};
+        proxy_pass {% if item.pass is defined %}{{ item.pass }}{% else %}http://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{% endif %};
       }
     {% else %}
       root /srv/http/{{ item.name }};

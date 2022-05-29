@@ -27,8 +27,8 @@
     name: nginx
 
 - name: Copying nginx configuration
-  copy:
-    src: nginx.conf
+  template:
+    src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
   notify: restart_nginx
 
