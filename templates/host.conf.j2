@@ -54,7 +54,7 @@ server {
             '{{ attr.name }}' '{{ attr.value }}';
           {% endfor %}
         {% endif %}
-        proxy_pass {% if item.pass is defined %}{{ item.pass }}{% else %}http://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{% endif %};
+        proxy_pass {{ item.pass }};
       }
     {% else %}
       root /srv/http/{{ item.name }};

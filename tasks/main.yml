@@ -22,7 +22,6 @@
 
 - name: Enabling nginx service
   service:
-    state: started
     enabled: yes
     name: nginx
 
@@ -55,16 +54,6 @@
     mode: '02775'
   notify: restart_nginx
 
-- name: Restart nginx
-  service:
-    name: nginx
-    state: restarted
-
-- name: Using Certbot to get certificates
-  command: "certbot certonly --quiet --agree-tos --email {{ nginx_letsencrypt_email }} --webroot -w /var/lib/letsencrypt/ -d {{ item.name }}"
-  with_items: "{{ nginx_hosts }}"
-  when: nginx_hosts is defined
-
 - name: Delete all hosts configuration
   shell: rm -rf /etc/nginx/hosts/*
   args:
@@ -79,6 +68,15 @@
   template:
     src: host.conf.j2
     dest: /etc/nginx/hosts/{{ item.name }}.conf
+  with_items: "{{ nginx_hosts }}"
+  when: nginx_hosts is defined
+  notify: restart_nginx
+
+- name: Flush handlers
+  meta: flush_handlers
+
+- name: Using Certbot to get certificates
+  command: "certbot certonly --quiet --agree-tos --email {{ nginx_letsencrypt_email }} --webroot -w /var/lib/letsencrypt/ -d {{ item.name }}"
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
   notify: restart_nginx
