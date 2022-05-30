@@ -24,6 +24,8 @@ server {
 
     error_log /var/log/nginx/{{ item.name }}.log;
 
+    include snippets/error_pages.conf;
+
     {% if (nginx_use_htpasswd is defined and nginx_use_htpasswd and item.auth is defined and item.auth) or item.allowed_domains is defined %}
       satisfy    any;
       {% if item.allowed_domains is defined %}
@@ -54,7 +56,7 @@ server {
             '{{ attr.name }}' '{{ attr.value }}';
           {% endfor %}
         {% endif %}
-        proxy_pass {{ item.pass }};
+        proxy_pass {% if item.pass is defined %}{{ item.pass }}{% else %}{{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{% endif %};
       }
     {% else %}
       root /srv/http/{{ item.name }};

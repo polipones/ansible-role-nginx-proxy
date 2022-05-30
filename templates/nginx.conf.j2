@@ -35,7 +35,7 @@ http {
     }
 
     {% for host in nginx_hosts if host.load_balance is defined %}
-        upstream {{ host.pass }} {
+        upstream {{ host.name|replace(".", "_")|replace("/", "_") }}_backend {
             {% if host.load_balance.method is defined and host.load_balance.method != "round_robin" %}
                 {{ host.load_balance.method }};
             {% endif %}
