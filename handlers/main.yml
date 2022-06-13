@@ -1,5 +1,13 @@
-- name: restart_nginx
+- name: Check nginx config
+  command: nginx -t
+  become: true
+  register: nginx_out
+  listen: Restart nginx
+
+- name: Restart nginx service
   service:
     name: nginx
     state: restarted
-  become: yes
+  become: true
+  when: nginx_out.rc == 0
+  listen: Restart nginx

@@ -32,7 +32,7 @@
     owner: root
     group: root
     mode: "644"
-  notify: restart_nginx
+  notify: Restart nginx
 
 - name: Copy custom error pages
   template:
@@ -50,13 +50,13 @@
   template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
-  notify: restart_nginx
+  notify: Restart nginx
 
 - name: Copy nginx password
   template:
     src: .htpasswd.j2
     dest: /etc/nginx/.htpasswd
-  notify: restart_nginx
+  notify: Restart nginx
   when: nginx_use_htpasswd | bool
 
 - name: Creating srv directories
@@ -73,7 +73,7 @@
     owner: www-data
     group: www-data
     mode: '02775'
-  notify: restart_nginx
+  notify: Restart nginx
 
 - name: Ensure hosts directory exists
   file:
@@ -86,7 +86,7 @@
     dest: /etc/nginx/hosts/{{ item.name }}.conf
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
-  notify: restart_nginx
+  notify: Restart nginx
 
 - name: Flush handlers
   meta: flush_handlers
@@ -95,4 +95,4 @@
   command: "certbot certonly --quiet --agree-tos --email {{ nginx_letsencrypt_email }} --webroot -w /var/lib/letsencrypt/ -d {{ item.name }}"
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
-  notify: restart_nginx
+  notify: Restart nginx
