@@ -1,0 +1,79 @@
+server {
+    server_name {{ item.name }};
+    return 301 $scheme://{{ item.name }}$request_uri;
+}
+
+server {
+  {% if item.default_server is defined and item.default_server %}
+    listen       443 ssl http2 default_server;
+  {% else %}
+    listen       443 ssl http2;
+  {% endif %}
+  server_name  {{ item.name }};
+
+  ssl_certificate      /etc/letsencrypt/live/{{ item.name }}/fullchain.pem;
+  ssl_certificate_key  /etc/letsencrypt/live/{{ item.name }}/privkey.pem;
+
+  ssl_session_timeout 1d;
+  ssl_session_cache shared:MozSSL:10m;  # about 40000 sessions
+  ssl_session_tickets off;
+
+  # modern configuration
+  ssl_protocols TLSv1.3;
+  ssl_prefer_server_ciphers off;
+
+  # HSTS (ngx_http_headers_module is required) (63072000 seconds)
+  add_header Strict-Transport-Security "max-age=63072000" always;
+
+  # OCSP stapling
+  ssl_stapling on;
+  ssl_stapling_verify on;
+  resolver 193.17.47.1 185.43.135.1;
+
+  error_log /var/log/nginx/{{ item.name }}.log;
+
+  include snippets/error_pages.conf;
+
+  {% if (nginx_use_htpasswd is defined and nginx_use_htpasswd and item.auth is defined and item.auth) or item.allowed_domains is defined %}
+    satisfy    any;
+    {% if item.allowed_domains is defined %}
+      {% for domain in item.allowed_domains %}
+        allow {{ domain }};
+      {% endfor %}
+    {% endif %}
+    deny       all;
+    {% if nginx_use_htpasswd is defined and nginx_use_htpasswd and item.auth is defined and item.auth %}
+      auth_basic "Private page";
+      auth_basic_user_file /etc/nginx/.htpasswd;
+    {% endif %}
+  {% endif %}
+
+  {% if item.pass is defined or item.load_balance is defined %}
+    {% if item.location is defined %}
+      location {{ item.location }} {
+    {% else %}
+      location / {
+    {% endif %}
+      {% if item.proxy_headers is defined %}
+        {% for header in item.proxy_headers %}
+          proxy_set_header '{{ header.name }}' '{{ header.value }}';
+        {% endfor %}
+      {% endif %}
+      {% if item.other_proxy_attributes is defined %}
+        {% for attr in item.other_proxy_attributes %}
+          '{{ attr.name }}' '{{ attr.value }}';
+        {% endfor %}
+      {% endif %}
+      proxy_pass {% if item.pass is defined %}{{ item.pass }}{% else %}{{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{% endif %};
+    }
+  {% else %}
+    root /srv/http/{{ item.name }};
+  {% endif %}
+
+  {% if item.headers is defined %}
+    {% for header in item.headers %}
+      add_header '{{ header.name }}' '{{ header.value }}';
+    {% endfor %}
+  {% endif %}
+  index index.html index.htm;
+}

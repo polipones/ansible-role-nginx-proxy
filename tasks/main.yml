@@ -80,19 +80,44 @@
     state: directory
     path: /etc/nginx/hosts
 
-- name: Deploy nginx configurations
-  template:
-    src: host.conf.j2
-    dest: /etc/nginx/hosts/{{ item.name }}.conf
+- name: Check for existing HTTPS configs
+  stat:
+    path: "/etc/nginx/hosts/{{ item.name }}.https.conf"
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
+  register: stats
+
+- debug: 
+    var: stats
+
+- name: Deploy temporary HTTP Nginx configurations
+  template:
+    src: host.http.conf.j2
+    dest: "/etc/nginx/hosts/{{ item.item.name }}.http.conf"
+  with_items: "{{ stats.results }}"
+  when: not item.stat.exists
   notify: Restart nginx
 
 - name: Flush handlers
   meta: flush_handlers
 
 - name: Using Certbot to get certificates
-  command: "certbot certonly --quiet --agree-tos --email {{ nginx_letsencrypt_email }} --webroot -w /var/lib/letsencrypt/ -d {{ item.name }}"
+  command: "certbot certonly --quiet --agree-tos --email {{ nginx_letsencrypt_email }} --webroot -w /var/lib/letsencrypt/ -d {{ item.item.name }}"
+  with_items: "{{ stats.results }}"
+  when: not item.stat.exists
+  notify: Restart nginx
+
+- name: Remove temporary HTTP sites
+  file:
+    path: "/etc/nginx/hosts/{{ item.item.name }}.http.conf"
+    state: absent
+  with_items: "{{ stats.results }}"
+  when: not item.stat.exists
+
+- name: Deploy HTTPS Nginx configurations
+  template:
+    src: host.https.conf.j2
+    dest: "/etc/nginx/hosts/{{ item.name }}.https.conf"
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
   notify: Restart nginx

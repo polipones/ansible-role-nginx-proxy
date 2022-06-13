@@ -46,7 +46,7 @@ http {
         }
     {% endfor %}
 
-    server {
+    {# server {
         listen 80 default_server;
         server_name _;
 
@@ -60,6 +60,6 @@ http {
           default_type "text/plain";
           try_files $uri =404;
         }
-    }
+    } #}
     client_max_body_size 0;
 }
