@@ -87,9 +87,6 @@
   when: nginx_hosts is defined
   register: stats
 
-- debug: 
-    var: stats
-
 - name: Deploy temporary HTTP Nginx configurations
   template:
     src: host.http.conf.j2

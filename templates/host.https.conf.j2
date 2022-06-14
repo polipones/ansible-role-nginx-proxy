@@ -1,6 +1,7 @@
 server {
-    server_name {{ item.name }};
-    return 301 $scheme://{{ item.name }}$request_uri;
+  server_name {{ item.name }};
+
+  return 301 https://{{ item.name }}$request_uri;
 }
 
 server {
@@ -75,5 +76,13 @@ server {
       add_header '{{ header.name }}' '{{ header.value }}';
     {% endfor %}
   {% endif %}
+
+  location ^~ /.well-known/acme-challenge/ {
+    allow all;
+    root /var/lib/letsencrypt/;
+    default_type "text/plain";
+    try_files $uri =404;
+  }
+
   index index.html index.htm;
 }
