@@ -14,22 +14,10 @@ server {
 
   ssl_certificate      /etc/letsencrypt/live/{{ item.name }}/fullchain.pem;
   ssl_certificate_key  /etc/letsencrypt/live/{{ item.name }}/privkey.pem;
+  # verify chain of trust of OCSP response using Root CA and Intermediate certs
+  ssl_trusted_certificate /etc/letsencrypt/live/{{ item.name }}/chain.pem;
 
-  ssl_session_timeout 1d;
-  ssl_session_cache shared:MozSSL:10m;  # about 40000 sessions
-  ssl_session_tickets off;
-
-  # modern configuration
-  ssl_protocols TLSv1.3;
-  ssl_prefer_server_ciphers off;
-
-  # HSTS (ngx_http_headers_module is required) (63072000 seconds)
-  add_header Strict-Transport-Security "max-age=63072000" always;
-
-  # OCSP stapling
-  ssl_stapling on;
-  ssl_stapling_verify on;
-  resolver 193.17.47.1 185.43.135.1;
+  {{ nginx_ssl_config }}
 
   error_log /var/log/nginx/{{ item.name }}.log;
 

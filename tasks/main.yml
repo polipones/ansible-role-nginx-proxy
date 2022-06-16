@@ -46,6 +46,14 @@
     - "403.html"
     - "404.html"
 
+- name: Get DH params
+  get_url:
+    dest: "{{ nginx_ssl_dhparams_path }}"
+    owner: root
+    group: root
+    mode: '664'
+    url: "https://ssl-config.mozilla.org/ffdhe2048.txt"
+
 - name: Copying nginx configuration
   template:
     src: nginx.conf.j2

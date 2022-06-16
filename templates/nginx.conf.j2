@@ -1,6 +1,6 @@
 
 #user html;
-worker_processes  1;
+worker_processes auto;
 
 #error_log  logs/error.log;
 #error_log  logs/error.log  notice;
@@ -46,20 +46,5 @@ http {
         }
     {% endfor %}
 
-    {# server {
-        listen 80 default_server;
-        server_name _;
-
-        location / {
-        	return 301 https://$host$request_uri;
-        }
-
-        location ^~ /.well-known/acme-challenge/ {
-          allow all;
-          root /var/lib/letsencrypt/;
-          default_type "text/plain";
-          try_files $uri =404;
-        }
-    } #}
     client_max_body_size 0;
 }
