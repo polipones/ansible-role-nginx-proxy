@@ -1,3 +1,7 @@
+# jinja2: trim_blocks: True
+# jinja2: lstrip_blocks: True
+{{ ansible_managed | comment(decoration="# ") }}
+
 server {
   server_name {{ item.name }};
 
@@ -37,7 +41,27 @@ server {
     {% endif %}
   {% endif %}
 
-  {% if item.pass is defined or item.load_balance is defined %}
+  {% if item.passes is defined %}
+    {% for pass in item.passes %}
+      {% if pass.location is defined %}
+        location {{ pass.location }} {
+      {% else %}
+        location / {
+      {% endif %}
+        {% if pass.proxy_headers is defined %}
+          {% for header in pass.proxy_headers %}
+            proxy_set_header {{ header.name }} {{ header.value }};
+          {% endfor %}
+        {% endif %}
+        {% if pass.other_proxy_attributes is defined %}
+          {% for attr in pass.other_proxy_attributes %}
+            {{ attr.name }} {{ attr.value }};
+          {% endfor %}
+        {% endif %}
+        proxy_pass {{ pass.upstream }};
+      }
+    {% endfor %}
+  {% elif item.load_balance is defined %}
     {% if item.location is defined %}
       location {{ item.location }} {
     {% else %}
@@ -45,15 +69,15 @@ server {
     {% endif %}
       {% if item.proxy_headers is defined %}
         {% for header in item.proxy_headers %}
-          proxy_set_header '{{ header.name }}' '{{ header.value }}';
+          proxy_set_header {{ header.name }} {{ header.value }};
         {% endfor %}
       {% endif %}
       {% if item.other_proxy_attributes is defined %}
         {% for attr in item.other_proxy_attributes %}
-          '{{ attr.name }}' '{{ attr.value }}';
+          {{ attr.name }} {{ attr.value }};
         {% endfor %}
       {% endif %}
-      proxy_pass {% if item.pass is defined %}{{ item.pass }}{% else %}{{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{% endif %};
+      proxy_pass {{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend;
     }
   {% else %}
     root /srv/http/{{ item.name }};
@@ -61,7 +85,7 @@ server {
 
   {% if item.headers is defined %}
     {% for header in item.headers %}
-      add_header '{{ header.name }}' '{{ header.value }}';
+      add_header {{ header.name }} {{ header.value }};
     {% endfor %}
   {% endif %}
 
