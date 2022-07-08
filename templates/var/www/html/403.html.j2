@@ -27,6 +27,10 @@
         width: 40%;
 
         align-self: center;
+        {% if nginx_without_logo is defined and nginx_without_logo %}
+          display: none;
+          margin: auto;
+        {% endif %}
       }
       h1 {
         margin-bottom: 20px;
