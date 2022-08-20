@@ -43,6 +43,13 @@ http {
             {% for server in host.load_balance.servers %}
                 server {{ server.name }} {% if server.options is defined %}{{ server.options }}{% endif %};
             {% endfor %}
+
+            {% if host.load_balance.keepalive_connections is defined %}
+                keepalive {{ host.load_balance.keepalive_connections }};
+            {% else %}
+                keepalive 32;
+            {% endif %}
+            
         }
     {% endfor %}
 
