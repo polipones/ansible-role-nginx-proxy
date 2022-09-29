@@ -1,3 +1,15 @@
+{% if item.item.redirect_www is not defined or item.item.redirect_www %}
+server {
+  server_name www.{{ item.item.name }};
+
+  error_log /var/log/nginx/{{ item.item.name }}.log;
+
+  include snippets/error_pages.conf;
+
+  return 301 http://{{ item.item.name }}$request_uri;
+}
+{% endif %}
+
 server {
     server_name {{ item.item.name }};
 
