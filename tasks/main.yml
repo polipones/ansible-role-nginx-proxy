@@ -52,7 +52,7 @@
     owner: root
     group: root
     mode: '664'
-    url: "https://ssl-config.mozilla.org/ffdhe2048.txt"
+    url: "https://ssl-config.mozilla.org/ffdhe4096.txt"
 
 - name: Copying nginx configuration
   template:
