@@ -2,7 +2,7 @@
 # jinja2: lstrip_blocks: True
 {{ ansible_managed | comment(decoration="# ") }}
 
-{% if item.redirect_www is not defined or item.redirect_www %}
+{% if item.redirect_www is defined and item.redirect_www %}
 server {
   listen 80;
   listen 443 ssl http2;

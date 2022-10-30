@@ -107,7 +107,18 @@
   meta: flush_handlers
 
 - name: Using Certbot to get certificates
-  command: "certbot certonly --quiet --agree-tos --expand --email {{ nginx_letsencrypt_email }} --webroot -w /var/lib/letsencrypt/ -d {{ item.item.name }} -d www.{{ item.item.name }}"
+  command: >
+    certbot certonly
+      --quiet
+      --agree-tos
+      --expand
+      --email {{ nginx_letsencrypt_email }}
+      --webroot
+      -w /var/lib/letsencrypt/
+      -d {{ item.item.name }}
+      {% if item.item.redirect_www is defined and item.item.redirect_www %}
+      -d www.{{ item.item.name }}
+      {% endif %}
   with_items: "{{ stats.results }}"
   when: not item.stat.exists
   notify: Restart nginx

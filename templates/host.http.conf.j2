@@ -1,4 +1,4 @@
-{% if item.item.redirect_www is not defined or item.item.redirect_www %}
+{% if item.item.redirect_www is defined and item.item.redirect_www %}
 server {
   server_name www.{{ item.item.name }};
 
