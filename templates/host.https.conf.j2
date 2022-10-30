@@ -122,5 +122,9 @@ server {
     try_files $uri =404;
   }
 
+  {% if item.index_pages is defined %}
+  index {{ item.index_pages }};
+  {% else %}
   index index.html index.htm;
+  {% endif %}
 }
