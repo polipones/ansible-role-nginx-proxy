@@ -1,3 +1,6 @@
+{% if nginx_streams is defined %}
+load_module /usr/lib/nginx/modules/ngx_stream_module.so;
+{% endif %}
 
 #user html;
 worker_processes auto;
@@ -54,4 +57,25 @@ http {
     {% endfor %}
 
     client_max_body_size 0;
+}
+
+stream {
+    include streams/*.conf;
+
+    {% for host in nginx_streams %}
+        upstream {{ host.name|replace(".", "_")|replace("/", "_") }}_backend {
+            {% if host.method is defined and host.method != "round_robin" %}
+                {{ host.method }};
+            {% endif %}
+
+            {% for server in host.servers %}
+                server {{ server.name }} {% if server.options is defined %}{{ server.options }}{% endif %};
+            {% endfor %}
+
+            {% if host.active_healthcheck is defined and host.active_healthcheck.enabled %}
+                zone {{ host.name|replace(".", "_")|replace("/", "_") }}_backend 64k;
+            {% endif %}
+            
+        }
+    {% endfor %}
 }

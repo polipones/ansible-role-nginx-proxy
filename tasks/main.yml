@@ -5,6 +5,8 @@
   loop:
     - "{{ nginx_hosts }}"
     - "{{ nginx_letsencrypt_email }}"
+  tags:
+    - http
 
 - name: Check .htpasswd credential variables
   fail:
@@ -13,17 +15,27 @@
   loop:
     - "{{ nginx_htpasswd_username }}"
     - "{{ nginx_htpasswd_hashed_password }}"
+  tags:
+    - http
 
 - name: Installing nginx and certbot
   apt:
     pkg:
       - nginx
       - certbot
+  tags:
+    - http
+    - streams
+    - install
 
 - name: Enabling nginx service
   service:
     enabled: yes
     name: nginx
+  tags:
+    - http
+    - streams
+    - install
 
 - name: Copy custom error pages snippet config
   copy:
@@ -33,6 +45,8 @@
     group: root
     mode: "644"
   notify: Restart nginx
+  tags:
+    - http
 
 - name: Copy custom error pages
   template:
@@ -45,6 +59,8 @@
     - "401.html"
     - "403.html"
     - "404.html"
+  tags:
+    - http
 
 - name: Get DH params
   get_url:
@@ -53,12 +69,17 @@
     group: root
     mode: '664'
     url: "https://ssl-config.mozilla.org/ffdhe4096.txt"
+  tags:
+    - http
 
 - name: Copying nginx configuration
   template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
   notify: Restart nginx
+  tags:
+    - http
+    - streams
 
 - name: Copy nginx password
   template:
@@ -66,6 +87,8 @@
     dest: /etc/nginx/.htpasswd
   notify: Restart nginx
   when: nginx_use_htpasswd | bool
+  tags:
+    - http
 
 - name: Creating srv directories
   file:
@@ -73,6 +96,8 @@
     path: /srv/http/{{ item.name }}
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
+  tags:
+    - http
 
 - name: Creating challenge directory
   file:
@@ -82,11 +107,22 @@
     group: www-data
     mode: '02775'
   notify: Restart nginx
+  tags:
+    - http
 
 - name: Ensure hosts directory exists
   file:
     state: directory
     path: /etc/nginx/hosts
+  tags:
+    - http
+
+- name: Ensure streams directory exists
+  file:
+    state: directory
+    path: /etc/nginx/streams
+  tags:
+    - streams
 
 - name: Check for existing HTTPS configs
   stat:
@@ -94,17 +130,24 @@
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
   register: stats
+  tags:
+    - http
 
 - name: Deploy temporary HTTP Nginx configurations
   template:
-    src: host.http.conf.j2
+    src: hosts/host.http.conf.j2
     dest: "/etc/nginx/hosts/{{ item.item.name }}.http.conf"
   with_items: "{{ stats.results }}"
   when: not item.stat.exists
   notify: Restart nginx
+  tags:
+    - http
 
 - name: Flush handlers
   meta: flush_handlers
+  tags:
+    - http
+    - streams
 
 - name: Using Certbot to get certificates
   command: >
@@ -122,6 +165,8 @@
   with_items: "{{ stats.results }}"
   when: not item.stat.exists
   notify: Restart nginx
+  tags:
+    - http
 
 - name: Remove temporary HTTP sites
   file:
@@ -129,11 +174,25 @@
     state: absent
   with_items: "{{ stats.results }}"
   when: not item.stat.exists
+  tags:
+    - http
 
 - name: Deploy HTTPS Nginx configurations
   template:
-    src: host.https.conf.j2
+    src: hosts/host.https.conf.j2
     dest: "/etc/nginx/hosts/{{ item.name }}.https.conf"
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
   notify: Restart nginx
+  tags:
+    - http
+
+- name: Deploy TCP/UDP load balancer streams
+  template:
+    src: streams/stream.conf.j2
+    dest: "/etc/nginx/streams/{{ item.name }}.conf"
+  with_items: "{{ nginx_streams }}"
+  when: nginx_streams is defined
+  notify: Restart nginx
+  tags:
+    - streams
