@@ -28,5 +28,7 @@ nginx_htpasswd_hashed_password: ""
 #       - "192.168.0.0/24"
 nginx_hosts: []
 
+nginx_streams: []
+
 # Letsencrypt
 nginx_letsencrypt_email: ""
