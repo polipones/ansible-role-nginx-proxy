@@ -63,7 +63,16 @@ server {
     {% endif %}
   {% endif %}
 
-  {% if item.passes is defined %}
+  location ^~ /.well-known/acme-challenge/ {
+    allow all;
+    root /var/lib/letsencrypt/;
+    default_type "text/plain";
+    try_files $uri =404;
+  }
+
+  {% if item.redirect is defined %}
+    return {{ item.redirect.http_code | default(301) }} {{ item.redirect.url }};
+  {% elif item.passes is defined %}
     {% for pass in item.passes %}
       {% if pass.location is defined %}
         location {{ pass.location }} {
@@ -114,13 +123,6 @@ server {
       add_header {{ header.name }} {{ header.value }};
     {% endfor %}
   {% endif %}
-
-  location ^~ /.well-known/acme-challenge/ {
-    allow all;
-    root /var/lib/letsencrypt/;
-    default_type "text/plain";
-    try_files $uri =404;
-  }
 
   {% if item.index_pages is defined %}
   index {{ item.index_pages }};
