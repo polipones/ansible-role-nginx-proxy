@@ -112,7 +112,7 @@ server {
       proxy_http_version 1.1;
       proxy_set_header Connection "";
 
-      proxy_pass {{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend;
+      proxy_pass {{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{{ item.load_balance.path | default('/') }};
     }
   {% else %}
     root /srv/http/{{ item.name }};
