@@ -157,6 +157,7 @@
       --expand
       --email {{ nginx_letsencrypt_email }}
       --webroot
+      --deploy-hook "systemctl reload nginx"
       -w /var/lib/letsencrypt/
       -d {{ item.item.name }}
       {% if item.item.redirect_www is defined and item.item.redirect_www %}
