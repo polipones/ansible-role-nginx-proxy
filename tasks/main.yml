@@ -42,6 +42,7 @@
     owner: root
     group: root
     mode: "644"
+    lstrip_blocks: yes
   loop:
     - "401.html"
     - "403.html"
@@ -63,6 +64,7 @@
   template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
+    lstrip_blocks: yes
   notify: Restart nginx
   tags:
     - http
@@ -72,6 +74,7 @@
   template:
     src: .htpasswd.j2
     dest: /etc/nginx/.htpasswd
+    lstrip_blocks: yes
   notify: Restart nginx
   when: nginx_use_htpasswd | bool
   tags:
@@ -124,6 +127,7 @@
   template:
     src: hosts/host.tmp-http.conf.j2
     dest: "/etc/nginx/hosts/{{ item.item.name }}.tmp-http.conf"
+    lstrip_blocks: yes
   with_items: "{{ stats.results }}"
   when: not item.stat.exists
   notify: Restart nginx
@@ -169,6 +173,7 @@
   template:
     src: hosts/host.conf.j2
     dest: "/etc/nginx/hosts/{{ item.name }}.conf"
+    lstrip_blocks: yes
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
   notify: Restart nginx
@@ -179,6 +184,7 @@
   template:
     src: streams/stream.conf.j2
     dest: "/etc/nginx/streams/{{ item.name }}.conf"
+    lstrip_blocks: yes
   with_items: "{{ nginx_streams }}"
   when: nginx_streams is defined
   notify: Restart nginx

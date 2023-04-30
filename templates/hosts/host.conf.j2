@@ -1,8 +1,7 @@
-# jinja2: trim_blocks: True
-# jinja2: lstrip_blocks: True
 {{ ansible_managed | comment(decoration="# ") }}
 
-{%- import 'macros/server.j2' as server_macro with context %}
+{% import 'macros/server.j2' as server_macro with context %}
+{% import 'macros/acme_location.j2' as acme_location_macro %}
 
 {% if item.redirect_www is defined and item.redirect_www %}
 server {
@@ -33,15 +32,10 @@ server {
 
   include snippets/error_pages.conf;
 
-  location ^~ /.well-known/acme-challenge/ {
-    allow all;
-    root /var/lib/letsencrypt/;
-    default_type "text/plain";
-    try_files $uri =404;
-  }
+    {{ acme_location_macro.acme_location() }}
 
   {% if item.plain_http is defined %}
-    {{- server_macro.auth(item.plain_http)|indent(4, True) -}}
+    {{ server_macro.auth(item.plain_http) }}
   {% else %}
     return 301 https://{{ item.name }}$request_uri;
   {% endif %}
@@ -66,14 +60,9 @@ server {
 
   include snippets/error_pages.conf;
 
-  {{- server_macro.auth(item)|indent(4, True) }}
+    {{ server_macro.auth(item) }}
 
-  location ^~ /.well-known/acme-challenge/ {
-    allow all;
-    root /var/lib/letsencrypt/;
-    default_type "text/plain";
-    try_files $uri =404;
-  }
+    {{ acme_location_macro.acme_location() }}
 
   {% if item.redirect is defined %}
     return {{ item.redirect.http_code | default(301) }} {{ item.redirect.url }};
