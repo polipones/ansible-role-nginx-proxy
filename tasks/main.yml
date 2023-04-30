@@ -122,8 +122,8 @@
 
 - name: Deploy temporary HTTP Nginx configurations
   template:
-    src: hosts/host.http.conf.j2
-    dest: "/etc/nginx/hosts/{{ item.item.name }}.http.conf"
+    src: hosts/host.tmp-http.conf.j2
+    dest: "/etc/nginx/hosts/{{ item.item.name }}.tmp-http.conf"
   with_items: "{{ stats.results }}"
   when: not item.stat.exists
   notify: Restart nginx
@@ -158,7 +158,7 @@
 
 - name: Remove temporary HTTP sites
   file:
-    path: "/etc/nginx/hosts/{{ item.item.name }}.http.conf"
+    path: "/etc/nginx/hosts/{{ item.item.name }}.tmp-http.conf"
     state: absent
   with_items: "{{ stats.results }}"
   when: not item.stat.exists
