@@ -2,7 +2,7 @@
 # jinja2: lstrip_blocks: True
 {{ ansible_managed | comment(decoration="# ") }}
 
-{% import 'macros/server.j2' as server_macro with context %}
+{%- import 'macros/server.j2' as server_macro with context %}
 
 {% if item.redirect_www is defined and item.redirect_www %}
 server {
@@ -41,7 +41,7 @@ server {
   }
 
   {% if item.plain_http is defined %}
-    {{ server_macro.auth(item.plain_http) }}
+    {{- server_macro.auth(item.plain_http)|indent(4, True) -}}
   {% else %}
     return 301 https://{{ item.name }}$request_uri;
   {% endif %}
@@ -66,7 +66,7 @@ server {
 
   include snippets/error_pages.conf;
 
-  {{ server_macro.auth(item) }}
+  {{- server_macro.auth(item)|indent(4, True) }}
 
   location ^~ /.well-known/acme-challenge/ {
     allow all;

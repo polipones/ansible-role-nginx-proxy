@@ -1,15 +1,17 @@
 {%- macro auth(host) -%}
-    {% if (nginx_use_htpasswd is defined and nginx_use_htpasswd and host.auth is defined and host.auth) or host.allowed_domains is defined %}
-      satisfy    any;
-      {% if host.allowed_domains is defined %}
-        {% for domain in host.allowed_domains %}
-          allow {{ domain }};
-        {% endfor %}
-      {% endif %}
-      deny       all;
-      {% if nginx_use_htpasswd is defined and nginx_use_htpasswd and host.auth is defined and host.auth %}
-        auth_basic "Private page";
-        auth_basic_user_file /etc/nginx/.htpasswd;
-      {% endif %}
-    {% endif %}
+{%- if (nginx_use_htpasswd is defined and nginx_use_htpasswd and host.auth is defined and host.auth) or host.allowed_domains is defined -%}
+    satisfy    any;
+    {% if host.allowed_domains is defined -%}
+        {% for domain in host.allowed_domains -%}
+    allow {{ domain }};
+        {% endfor -%}
+    {% endif -%}
+    
+    deny       all;
+    
+    {%- if nginx_use_htpasswd is defined and nginx_use_htpasswd and host.auth is defined and host.auth -%}
+    auth_basic "Private page";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    {% endif -%}
+{%- endif -%}
 {%- endmacro -%}
