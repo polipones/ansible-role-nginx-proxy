@@ -18,20 +18,7 @@
   tags:
     - http
 
-- name: Installing nginx and certbot
-  apt:
-    pkg:
-      - nginx
-      - certbot
-  tags:
-    - http
-    - streams
-    - install
-
-- name: Enabling nginx service
-  service:
-    enabled: yes
-    name: nginx
+- include_tasks: install.yml
   tags:
     - http
     - streams

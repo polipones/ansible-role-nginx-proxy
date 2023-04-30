@@ -1,0 +1,60 @@
+- name: Install packages needed for installation of nginx
+  apt:
+    pkg:
+      - curl
+      - ca-certificates
+  tags:
+    - http
+    - streams
+    - install
+
+- name: Add Nginx repository
+  block:
+    - name: Creating keyrings directory
+      file:
+        state: directory
+        path: /etc/apt/keyrings
+    - name: Add Nginx repository | GPG key
+      ansible.builtin.get_url:
+        url: https://nginx.org/keys/nginx_signing.key
+        dest: /etc/apt/keyrings/nginx-archive-keyring.asc
+        mode: '0644'
+        force: true
+
+    - name: Add Nginx repository | Apt repo
+      ansible.builtin.apt_repository:
+        filename: nginx
+        repo: 'deb [signed-by=/etc/apt/keyrings/nginx-archive-keyring.asc] http://nginx.org/packages/debian {{ ansible_distribution_release }} nginx'
+
+    - name: Add Nginx repository | Pin package
+      copy:
+        src: 99nginx
+        dest: /etc/apt/preferences.d/99nginx
+        owner: root
+        group: root
+        mode: "644"
+  tags:
+    - http
+    - streams
+    - install
+
+- name: Installing nginx and certbot
+  apt:
+    pkg:
+      - nginx
+      - certbot
+    update_cache: yes
+  notify: Restart nginx
+  tags:
+    - http
+    - streams
+    - install
+
+- name: Enabling nginx service
+  service:
+    enabled: yes
+    name: nginx
+  tags:
+    - http
+    - streams
+    - install
