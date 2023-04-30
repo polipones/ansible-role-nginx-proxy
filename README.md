@@ -59,7 +59,7 @@ You can also specify list of HTTP Headers as list to host configuration, like:
 
 ## Load balancer
 
-With this role, you can even setup load balancer. For more information see [templates/nginx.conf.j2](templates/nginx.conf.j2) and [templates/hosts/host.https.conf.j2](templates/hosts/host.https.conf.j2).
+With this role, you can even setup load balancer. For more information see [templates/nginx.conf.j2](templates/nginx.conf.j2) and [templates/hosts/host.conf.j2](templates/hosts/host.conf.j2).
 
     - name: kvm.pod.cvut.cz
       load_balance:

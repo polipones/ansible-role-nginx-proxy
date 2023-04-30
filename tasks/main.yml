@@ -113,7 +113,7 @@
 
 - name: Check for existing HTTPS configs
   stat:
-    path: "/etc/nginx/hosts/{{ item.name }}.https.conf"
+    path: "/etc/nginx/hosts/{{ item.name }}.conf"
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
   register: stats
@@ -167,8 +167,8 @@
 
 - name: Deploy HTTPS Nginx configurations
   template:
-    src: hosts/host.https.conf.j2
-    dest: "/etc/nginx/hosts/{{ item.name }}.https.conf"
+    src: hosts/host.conf.j2
+    dest: "/etc/nginx/hosts/{{ item.name }}.conf"
   with_items: "{{ nginx_hosts }}"
   when: nginx_hosts is defined
   notify: Restart nginx
