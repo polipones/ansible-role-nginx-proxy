@@ -33,10 +33,10 @@ server {
 
     include snippets/error_pages.conf;
 
-    {{ acme_location_macro.acme_location() }}
+    {{ acme_location_macro.acme_location()|indent(4) }}
 
     {% if item.plain_http is defined %}
-    {{ server_macro.auth(item.plain_http) }}
+    {{ server_macro.auth(item.plain_http)|indent(4) }}
 
     # TODO WIP - Add other host config
     {% else %}
@@ -64,9 +64,9 @@ server {
 
     include snippets/error_pages.conf;
 
-    {{ server_macro.auth(item) }}
+    {{ server_macro.auth(item)|indent(4) }}
 
-    {{ acme_location_macro.acme_location() }}
+    {{ acme_location_macro.acme_location()|indent(4) }}
 
     {% if item.redirect is defined %}
     return {{ item.redirect.http_code | default(301) }} {{ item.redirect.url }};
