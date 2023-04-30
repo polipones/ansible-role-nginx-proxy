@@ -1,12 +1,16 @@
+{{ ansible_managed | comment(decoration="# ") }}
+
+{% import 'macros/acme_location.j2' as acme_location_macro %}
+
 {% if item.item.redirect_www is defined and item.item.redirect_www %}
 server {
-  server_name www.{{ item.item.name }};
+    server_name www.{{ item.item.name }};
 
-  error_log /var/log/nginx/{{ item.item.name }}.log;
+    error_log /var/log/nginx/{{ item.item.name }}.log;
 
-  include snippets/error_pages.conf;
+    include snippets/error_pages.conf;
 
-  return 301 http://{{ item.item.name }}$request_uri;
+    return 301 http://{{ item.item.name }}$request_uri;
 }
 {% endif %}
 
@@ -18,12 +22,7 @@ server {
     
     root /var/www/html;
 
-    location ^~ /.well-known/acme-challenge/ {
-        allow all;
-        root /var/lib/letsencrypt/;
-        default_type "text/plain";
-        try_files $uri =404;
-    }
+    {{ acme_location_macro.acme_location() }}
 
     index index.nginx-debian.html;
 }
