@@ -32,7 +32,7 @@ server {
     {% if item.plain_http is defined %}
     {{ server_macro.auth(item.plain_http)|indent(4) }}
 
-    # TODO WIP - Add other host config
+    {{ server_macro.locations(item.plain_http)|indent(4) }}
     {% else %}
     return 301 https://{{ item.name }}$request_uri;
     {% endif %}
@@ -56,63 +56,5 @@ server {
 
     {{ acme_location_macro.acme_location()|indent(4) }}
 
-    {% if item.redirect is defined %}
-    return {{ item.redirect.http_code | default(301) }} {{ item.redirect.url }};
-    {% elif item.passes is defined %}
-        {% for pass in item.passes %}
-            {% if pass.location is defined %}
-    location {{ pass.location }} {
-            {% else %}
-    location / {
-            {% endif %}
-            {% if pass.proxy_headers is defined %}
-                {% for header in pass.proxy_headers %}
-        proxy_set_header {{ header.name }} {{ header.value }};
-                {% endfor %}
-            {% endif %}
-            {% if pass.other_proxy_attributes is defined %}
-                {% for attr in pass.other_proxy_attributes %}
-        {{ attr.name }} {{ attr.value }};
-                {% endfor %}
-            {% endif %}
-        proxy_pass {{ pass.upstream }};
-    }
-        {% endfor %}
-    {% elif item.load_balance is defined %}
-        {% if item.location is defined %}
-    location {{ item.location }} {
-        {% else %}
-    location / {
-        {% endif %}
-        {% if item.proxy_headers is defined %}
-            {% for header in item.proxy_headers %}
-        proxy_set_header {{ header.name }} {{ header.value }};
-            {% endfor %}
-        {% endif %}
-        {% if item.other_proxy_attributes is defined %}
-            {% for attr in item.other_proxy_attributes %}
-        {{ attr.name }} {{ attr.value }};
-            {% endfor %}
-        {% endif %}
-
-        proxy_http_version 1.1;
-        proxy_set_header Connection "";
-
-        proxy_pass {{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{{ item.load_balance.path | default('/') }};
-    }
-    {% else %}
-    root /srv/http/{{ item.name }};
-    {% endif %}
-
-    {% if item.headers is defined %}
-        {% for header in item.headers %}
-    add_header {{ header.name }} {{ header.value }};
-        {% endfor %}
-    {% endif %}
-
-    {% if item.index_pages is defined %}
-    index {{ item.index_pages }};
-    {% else %}
-    index index.html index.htm;
-    {% endif %}
+    {{ server_macro.locations(item)|indent(4) }}
 }

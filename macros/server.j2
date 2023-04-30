@@ -24,3 +24,65 @@ ssl_trusted_certificate /etc/letsencrypt/live/{{ host_name }}/chain.pem;
 
 {{ ssl_config }}
 {% endmacro %}
+
+{% macro locations(host) %}
+{% if host.redirect is defined %}
+return {{ host.redirect.http_code | default(301) }} {{ host.redirect.url }};
+{% elif host.passes is defined %}
+    {% for pass in host.passes %}
+        {% if pass.location is defined %}
+location {{ pass.location }} {
+        {% else %}
+location / {
+        {% endif %}
+        {% if pass.proxy_headers is defined %}
+            {% for header in pass.proxy_headers %}
+    proxy_set_header {{ header.name }} {{ header.value }};
+            {% endfor %}
+        {% endif %}
+        {% if pass.other_proxy_attributes is defined %}
+            {% for attr in pass.other_proxy_attributes %}
+    {{ attr.name }} {{ attr.value }};
+            {% endfor %}
+        {% endif %}
+    proxy_pass {{ pass.upstream }};
+}
+    {% endfor %}
+{% elif host.load_balance is defined %}
+    {% if host.location is defined %}
+location {{ host.location }} {
+    {% else %}
+location / {
+    {% endif %}
+    {% if host.proxy_headers is defined %}
+        {% for header in host.proxy_headers %}
+    proxy_set_header {{ header.name }} {{ header.value }};
+        {% endfor %}
+    {% endif %}
+    {% if host.other_proxy_attributes is defined %}
+        {% for attr in host.other_proxy_attributes %}
+    {{ attr.name }} {{ attr.value }};
+        {% endfor %}
+    {% endif %}
+
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+
+    proxy_pass {{ host.load_balance.protocol }}://{{ host.name|replace(".", "_")|replace("/", "_") }}_backend{{ host.load_balance.path | default('/') }};
+}
+{% else %}
+root /srv/http/{{ host.name }};
+{% endif %}
+
+{% if host.headers is defined %}
+    {% for header in host.headers %}
+add_header {{ header.name }} {{ header.value }};
+    {% endfor %}
+{% endif %}
+
+{% if host.index_pages is defined %}
+index {{ host.index_pages }};
+{% else %}
+index index.html index.htm;
+{% endif %}
+{% endmacro %}
