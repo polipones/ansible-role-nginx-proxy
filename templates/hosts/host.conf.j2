@@ -5,122 +5,126 @@
 
 {% if item.redirect_www is defined and item.redirect_www %}
 server {
-  listen 80;
-  listen 443 ssl http2;
+    listen 80;
+    listen 443 ssl http2;
 
-  server_name www.{{ item.name }};
+    server_name www.{{ item.name }};
 
-  ssl_certificate      /etc/letsencrypt/live/{{ item.name }}/fullchain.pem;
-  ssl_certificate_key  /etc/letsencrypt/live/{{ item.name }}/privkey.pem;
-  # verify chain of trust of OCSP response using Root CA and Intermediate certs
-  ssl_trusted_certificate /etc/letsencrypt/live/{{ item.name }}/chain.pem;
+    ssl_certificate         /etc/letsencrypt/live/{{ item.name }}/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/{{ item.name }}/privkey.pem;
 
-  {{ nginx_ssl_config }}
+    # verify chain of trust of OCSP response using Root CA and Intermediate certs
+    ssl_trusted_certificate /etc/letsencrypt/live/{{ item.name }}/chain.pem;
 
-  error_log /var/log/nginx/{{ item.name }}.log;
+    {{ nginx_ssl_config }}
 
-  include snippets/error_pages.conf;
+    error_log /var/log/nginx/{{ item.name }}.log;
 
-  return 301 https://{{ item.name }}$request_uri;
+    include snippets/error_pages.conf;
+
+    return 301 https://{{ item.name }}$request_uri;
 }
 {% endif %}
 
 server {
-  server_name {{ item.name }};
+    server_name {{ item.name }};
 
-  error_log /var/log/nginx/{{ item.name }}.log;
+    error_log /var/log/nginx/{{ item.name }}.log;
 
-  include snippets/error_pages.conf;
+    include snippets/error_pages.conf;
 
     {{ acme_location_macro.acme_location() }}
 
-  {% if item.plain_http is defined %}
+    {% if item.plain_http is defined %}
     {{ server_macro.auth(item.plain_http) }}
-  {% else %}
+
+    # TODO WIP - Add other host config
+    {% else %}
     return 301 https://{{ item.name }}$request_uri;
-  {% endif %}
+    {% endif %}
 }
 
 server {
-  {% if item.default_server is defined and item.default_server %}
+    {% if item.default_server is defined and item.default_server %}
     listen       443 ssl http2 default_server;
-  {% else %}
+    {% else %}
     listen       443 ssl http2;
-  {% endif %}
-  server_name  {{ item.name }};
+    {% endif %}
+    server_name  {{ item.name }};
 
-  ssl_certificate      /etc/letsencrypt/live/{{ item.name }}/fullchain.pem;
-  ssl_certificate_key  /etc/letsencrypt/live/{{ item.name }}/privkey.pem;
-  # verify chain of trust of OCSP response using Root CA and Intermediate certs
-  ssl_trusted_certificate /etc/letsencrypt/live/{{ item.name }}/chain.pem;
+    ssl_certificate         /etc/letsencrypt/live/{{ item.name }}/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/{{ item.name }}/privkey.pem;
 
-  {{ nginx_ssl_config }}
+    # verify chain of trust of OCSP response using Root CA and Intermediate certs
+    ssl_trusted_certificate /etc/letsencrypt/live/{{ item.name }}/chain.pem;
 
-  error_log /var/log/nginx/{{ item.name }}.log;
+    {{ nginx_ssl_config }}
 
-  include snippets/error_pages.conf;
+    error_log /var/log/nginx/{{ item.name }}.log;
+
+    include snippets/error_pages.conf;
 
     {{ server_macro.auth(item) }}
 
     {{ acme_location_macro.acme_location() }}
 
-  {% if item.redirect is defined %}
+    {% if item.redirect is defined %}
     return {{ item.redirect.http_code | default(301) }} {{ item.redirect.url }};
-  {% elif item.passes is defined %}
-    {% for pass in item.passes %}
-      {% if pass.location is defined %}
-        location {{ pass.location }} {
-      {% else %}
-        location / {
-      {% endif %}
-        {% if pass.proxy_headers is defined %}
-          {% for header in pass.proxy_headers %}
-            proxy_set_header {{ header.name }} {{ header.value }};
-          {% endfor %}
-        {% endif %}
-        {% if pass.other_proxy_attributes is defined %}
-          {% for attr in pass.other_proxy_attributes %}
-            {{ attr.name }} {{ attr.value }};
-          {% endfor %}
-        {% endif %}
+    {% elif item.passes is defined %}
+        {% for pass in item.passes %}
+            {% if pass.location is defined %}
+    location {{ pass.location }} {
+            {% else %}
+    location / {
+            {% endif %}
+            {% if pass.proxy_headers is defined %}
+                {% for header in pass.proxy_headers %}
+        proxy_set_header {{ header.name }} {{ header.value }};
+                {% endfor %}
+            {% endif %}
+            {% if pass.other_proxy_attributes is defined %}
+                {% for attr in pass.other_proxy_attributes %}
+        {{ attr.name }} {{ attr.value }};
+                {% endfor %}
+            {% endif %}
         proxy_pass {{ pass.upstream }};
-      }
-    {% endfor %}
-  {% elif item.load_balance is defined %}
-    {% if item.location is defined %}
-      location {{ item.location }} {
-    {% else %}
-      location / {
-    {% endif %}
-      {% if item.proxy_headers is defined %}
-        {% for header in item.proxy_headers %}
-          proxy_set_header {{ header.name }} {{ header.value }};
-        {% endfor %}
-      {% endif %}
-      {% if item.other_proxy_attributes is defined %}
-        {% for attr in item.other_proxy_attributes %}
-          {{ attr.name }} {{ attr.value }};
-        {% endfor %}
-      {% endif %}
-
-      proxy_http_version 1.1;
-      proxy_set_header Connection "";
-
-      proxy_pass {{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{{ item.load_balance.path | default('/') }};
     }
-  {% else %}
+        {% endfor %}
+    {% elif item.load_balance is defined %}
+        {% if item.location is defined %}
+    location {{ item.location }} {
+        {% else %}
+    location / {
+        {% endif %}
+        {% if item.proxy_headers is defined %}
+            {% for header in item.proxy_headers %}
+        proxy_set_header {{ header.name }} {{ header.value }};
+            {% endfor %}
+        {% endif %}
+        {% if item.other_proxy_attributes is defined %}
+            {% for attr in item.other_proxy_attributes %}
+        {{ attr.name }} {{ attr.value }};
+            {% endfor %}
+        {% endif %}
+
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_pass {{ item.load_balance.protocol }}://{{ item.name|replace(".", "_")|replace("/", "_") }}_backend{{ item.load_balance.path | default('/') }};
+    }
+    {% else %}
     root /srv/http/{{ item.name }};
-  {% endif %}
+    {% endif %}
 
-  {% if item.headers is defined %}
-    {% for header in item.headers %}
-      add_header {{ header.name }} {{ header.value }};
-    {% endfor %}
-  {% endif %}
+    {% if item.headers is defined %}
+        {% for header in item.headers %}
+    add_header {{ header.name }} {{ header.value }};
+        {% endfor %}
+    {% endif %}
 
-  {% if item.index_pages is defined %}
-  index {{ item.index_pages }};
-  {% else %}
-  index index.html index.htm;
-  {% endif %}
+    {% if item.index_pages is defined %}
+    index {{ item.index_pages }};
+    {% else %}
+    index index.html index.htm;
+    {% endif %}
 }
