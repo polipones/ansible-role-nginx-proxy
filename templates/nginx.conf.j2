@@ -1,17 +1,12 @@
-#user html;
 worker_processes auto;
 
 #error_log  logs/error.log;
 #error_log  logs/error.log  notice;
 #error_log  logs/error.log  info;
 
-#pid        logs/nginx.pid;
-
-
 events {
     worker_connections  1024;
 }
-
 
 http {
     server_names_hash_bucket_size  64;
@@ -46,22 +41,21 @@ http {
     }
 
     {% for host in nginx_hosts if host.load_balance is defined %}
-        upstream {{ host.name|replace(".", "_")|replace("/", "_") }}_backend {
+    upstream {{ host.name|replace(".", "_")|replace("/", "_") }}_backend {
             {% if host.load_balance.method is defined and host.load_balance.method != "round_robin" %}
-                {{ host.load_balance.method }};
+        {{ host.load_balance.method }};
             {% endif %}
 
             {% for server in host.load_balance.servers %}
-                server {{ server.name }} {% if server.options is defined %}{{ server.options }}{% endif %};
+        server {{ server.name }} {% if server.options is defined %}{{ server.options }}{% endif %};
             {% endfor %}
 
             {% if host.load_balance.keepalive_connections is defined %}
-                keepalive {{ host.load_balance.keepalive_connections }};
+        keepalive {{ host.load_balance.keepalive_connections }};
             {% else %}
-                keepalive 32;
+        keepalive 32;
             {% endif %}
-            
-        }
+    }
     {% endfor %}
 
     client_max_body_size 0;
@@ -71,19 +65,18 @@ stream {
     include streams/*.conf;
 
     {% for host in nginx_streams %}
-        upstream {{ host.name|replace(".", "_")|replace("/", "_") }}_backend {
+    upstream {{ host.name|replace(".", "_")|replace("/", "_") }}_backend {
             {% if host.method is defined and host.method != "round_robin" %}
-                {{ host.method }};
+        {{ host.method }};
             {% endif %}
 
             {% for server in host.servers %}
-                server {{ server.name }} {% if server.options is defined %}{{ server.options }}{% endif %};
+        server {{ server.name }} {% if server.options is defined %}{{ server.options }}{% endif %};
             {% endfor %}
 
             {% if host.active_healthcheck is defined and host.active_healthcheck.enabled %}
-                zone {{ host.name|replace(".", "_")|replace("/", "_") }}_backend 64k;
+        zone {{ host.name|replace(".", "_")|replace("/", "_") }}_backend 64k;
             {% endif %}
-            
-        }
+    }
     {% endfor %}
 }
