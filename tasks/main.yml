@@ -140,6 +140,13 @@
     - http
     - streams
 
+- name: Remove legacy *.https.conf hosts
+  file:
+    path: "/etc/nginx/hosts/*.https.conf"
+    state: absent
+  tags:
+    - http
+
 - name: Using Certbot to get certificates
   command: >
     certbot certonly
