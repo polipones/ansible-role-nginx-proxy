@@ -27,7 +27,7 @@ ssl_trusted_certificate /etc/letsencrypt/live/{{ host_name }}/chain.pem;
 
 {% macro locations(host) %}
 {% if host.redirect is defined %}
-return {{ host.redirect.http_code | default(301) }} {{ host.redirect.url }};
+return {{ host.redirect.http_code | default(301) }} {{ host.redirect.url }}$request_uri;
 {% elif host.passes is defined %}
     {% for pass in host.passes %}
         {% if pass.location is defined %}
