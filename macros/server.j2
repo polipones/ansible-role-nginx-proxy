@@ -66,7 +66,6 @@ location / {
     {% endif %}
 
     proxy_http_version 1.1;
-    proxy_set_header Connection "";
 
     proxy_pass {{ host.load_balance.protocol }}://{{ host.name|replace(".", "_")|replace("/", "_") }}_backend{{ host.load_balance.path | default('/') }};
 }
