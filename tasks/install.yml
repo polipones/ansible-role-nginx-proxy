@@ -24,7 +24,7 @@
     - name: Add Nginx repository | Apt repo
       ansible.builtin.apt_repository:
         filename: nginx
-        repo: 'deb [signed-by=/etc/apt/keyrings/nginx-archive-keyring.asc] http://nginx.org/packages/debian {{ ansible_distribution_release }} nginx'
+        repo: 'deb [signed-by=/etc/apt/keyrings/nginx-archive-keyring.asc] http://nginx.org/packages/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} nginx'
 
     - name: Add Nginx repository | Pin package
       copy:
